@@ -1,0 +1,846 @@
+--Finding the top 5 most common specific nouns used in comic summaries for each genre. 
+--This information can be useful when finding out what most comics are about in each genre section.
+--This information can also show overused specific nouns when summarizing comics.
+--Specific nouns are all nouns that contain semantical meaning and provide a reader with information. 
+--They do not include non-specific nouns such as "everything" or "everyone."
+--They do include words such as "hats" or "humans". 
+
+--QUERY 1:
+
+--STEP 1: Split summary text into single words and make sure that word units do not include punctuation marks or capitalization.
+CREATE TABLE split_summary AS
+  SELECT id,
+  "Name" AS name,
+  "Writer" AS writer,
+  "Likes" AS likes,
+  "Genre" AS genre,
+  "Update" AS update,
+  "Rating" AS rating,
+  "Subscribers" AS subscribers,
+  unnest(string_to_array(
+    LOWER(
+      REPLACE(
+      REPLACE(
+      REPLACE(
+      REPLACE(
+      REPLACE(
+      REPLACE(
+      REPLACE(
+      REPLACE(
+      REPLACE(
+      "Summary"
+      , ',', '')
+      , '.', '')
+      , '?', '')
+      ,'!', '')
+      ,'"','')
+      ,':','')
+      ,';','')
+      ,'(','')
+      ,')','')
+          )
+      ,' '                  )) AS summary
+FROM webtoon
+WHERE "Summary" NOT IN ('');
+
+--STEP 2: Find out which words are most commonly used across all genres. 
+--We will use this list to find which function words, adjectives, and verbs need to be excluded from our third query. 
+SELECT summary, COUNT (summary)
+FROM split_summary
+GROUP BY summary
+ORDER BY COUNT (summary) DESC ;
+
+--QUERY 2: 
+--STEP 3: Match nouns that appear in plural and singular form and have the same meaning in both forms.
+CREATE TABLE plural_match AS 
+  SELECT
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE(
+  REPLACE (split_summary.summary, 'friends', 'friend') 
+  , 'person', 'people')--PEOPLALITY ERROR, NEED TO SOLVE
+  , 'stories', 'story')
+  , 'days', 'day')
+  ,'humans', 'human')
+  , 'schools', 'school')
+  , 'girls', 'girl')
+  ,'beings', 'being')
+  ,'years', 'year')
+  ,'students', 'student')
+  ,'secrets', 'secret')
+  ,'powers', 'power')
+  ,'monsters', 'monster')
+  ,'things', 'thing')
+  ,'changes', 'change')
+  , 'adventures', 'adventure')
+  ,'heroes', 'hero')
+  , 'abilities', 'ability')
+  , 'comics', 'comic')
+  ,'ghosts', 'ghost')
+  ,'dreams', 'dream')
+  ,'fighting', 'fight')
+  ,'accidents', 'accident')
+  ,'hearts', 'heart')
+  ,'chances', 'chance')
+  ,'journeys', 'journey')
+  ,'princes', 'prince') 
+  , 'games','game') 
+  ,'relationships','relationship') 
+  ,'omni-gods', 'gods')
+  ,'boys', 'boy')
+  ,'men','man')
+  ,'kingdoms','kingdom')
+  ,'witches','witch')
+  ,'demons', 'demon')
+  ,'quests', 'quest')
+  ,'brothers','brother')
+  ,'sisters','sister')
+  ,'cats', 'cat')
+  ,'half-ghost', 'ghost') 
+  ,'murders', 'murder')
+  ,'mermaids', 'mermaid')
+  ,'wizards', 'wizard')
+  ,'werewolves', 'werewolf')
+  ,'zombies', 'zombie')
+  ,'dragons', 'dragon') AS matched_summary
+FROM split_summary;
+
+--STEP 4: Filter out the words we don't need to see what's left. 
+--Without filtering out words, the top words for all genres will be function words.
+--This is because function words such as "the" are always the most commonly used words when looking at a text. 
+--We are not interested in function words, only content words.
+--Function words are "grammar words" or words that do not add meaning to a text; they only play a grammatical role.
+--Some examples of function words are 
+-- articles like "the" and "a", conjunctions such as "and", and non-specific pronouns such as "she", "he", "it," or "they."
+
+CREATE TABLE clean_summary AS 
+  SELECT plural_match.matched_summary AS clean_summary,
+  COUNT(plural_match.matched_summary)
+  FROM plural_match
+  WHERE plural_match.matched_summary NOT IN (
+                        'be',
+                        'who',
+                        'their',
+                        'you',
+                        'has',
+                        'from',
+                        'at',
+                        'are',
+                        'it',
+                        'by',
+                        'can',
+                        'they',
+                        'out',
+                        'one',
+                        'all',
+                        'this',
+                        'into',
+                        'your',
+                        'have',
+                        'or',
+                        'up',
+                        'him',
+                        'after',
+                        'what',
+                        'about',
+                        'new',
+                        'only',
+                        'just',
+                        'not',
+                        '--',
+                        'now',
+                        'find',
+                        'high',
+                        'young',
+                        'get',
+                        'if',
+                        'it''s',
+                        'do',
+                        'way',
+                        'more',
+                        'them',
+                        'where',
+                        ' ',
+                        'no',
+                        'must',
+                        'than',
+                        'own',
+                        'become',
+                        'make',
+                        'he''s',
+                        'other',
+                        'even',
+                        'two',
+                        'until',
+                        'like',
+                        'down',
+                        'she''s',
+                        'was',
+                        'ever',
+                        'every',
+                        'mysterious',
+                        'how',
+                        'could',
+                        'save',
+                        'so',
+                        'would',
+                        'there',
+                        'everything',
+                        'been',
+                        'most',
+                        'these',
+                        'first',
+                        'keep',
+                        'through',
+                        'does',
+                        'together',
+                        'able',
+                        'best',
+                        'herself',
+                        'little',
+                        '',
+                        'go',
+                        'know',
+                        'doesn''t',
+                        'between',
+                        'never',
+                        'however',
+                        'survive',
+                        'too',
+                        'himself',
+                        'before',
+                        'each',
+                        'take',
+                        'good',
+                        'comes',
+                        '-',
+                        'can''t',
+                        'right',
+                        'follow',
+                        'around',
+                        'while',
+                        'soon',
+                        'live',
+                        'lost',
+                        'against',
+                        'powerful',
+                        'you''re',
+                        'suddenly',
+                        'begins',
+                        'there''s',
+                        'seems',
+                        'always',
+                        'very',
+                        'three',
+                        'something',
+                        'discovers',
+                        'use',
+                        'over',
+                        'meets',
+                        'long',
+                        'nothing',
+                        'old',
+                        'protect',
+                        'much',
+                        'left',
+                        'gets',
+                        'real',
+                        'true',
+                        'any',
+                        'join',
+                        'off',
+                        'that''s',
+                        'last',
+                        'another',
+                        'anything',
+                        'going',
+                        'magical',
+                        'also',
+                        'why',
+                        'some',
+                        'wakes',
+                        'learn',
+                        'along',
+                        'enough',
+                        'starts',
+                        'don''t',
+                        'getting',
+                        'once',
+                        'had',
+                        'strange',
+                        'without',
+                        'perfect',
+                        'run',
+                        'having',
+                        'away',
+                        'since',
+                        'great',
+                        'though',
+                        'ancient',
+                        'decides',
+                        'bad',
+                        'who''s',
+                        'might',
+                        'determined',
+                        'knows',
+                        'learns',
+                        'goes',
+                        'dead',
+                        'trying',
+                        'isn''t',
+                        'then', 
+                        'same',
+                        'seem',
+                        'discover',
+                        'dangerous',
+                        'our',
+                        'unexpected',
+                        'sure',
+                        'everyone',
+                        'evil',
+                        'becomes',
+                        'known',
+                        'its',
+                        'we',
+                        'whose',
+                        'give',
+                        'wrong',
+                        'come',
+                        'really',
+                        'themselves',
+                        'working',
+                        'meet',
+                        'someone',
+                        'favorite',
+                        'popular',
+                        'got',
+                        'did',
+                        'alive',
+                        'kill',
+                        'those',
+                        'try',
+                        'want',
+                        'handsome',
+                        'pretty',
+                        'next',
+                        'bring',
+                        'social',
+                        'which',
+                        'forced',
+                        'here',
+                        'simple',
+                        'under',
+                        'both',
+                        'across',
+                        'i',
+                        'begin',
+                        'hard',
+                        'everyday',
+                        'daily',
+                        'were',
+                        'stay',
+                        'far',
+                        'unique',
+                        'they''re',
+                        'think',
+                        'entire',
+                        'beautiful',
+                        'becoming',
+                        'named',
+                        'dark',
+                        'small',
+                        'others',
+                        'yet',
+                        'late',
+                        'second',
+                        'ordinary',
+                        'won''t',
+                        'born',
+                        'finally',
+                        'accidentally',
+                        'better',
+                        'dating',
+                        'destroy',
+                        'personal',
+                        'because',
+                        'threatens',
+                        'actually',
+                        'quickly',
+                        'former',
+                        'makes',
+                        'different',
+                        'ten',
+                        'made',
+                        'still',
+                        'read',
+                        'happy',
+                        'quiet',
+                        'upon',
+                        'free',
+                        'us',
+                        'again',
+                        'within',
+                        'broken',
+                        'oh',
+                        'killed',
+                        'happen',
+                        'weird',
+                        'turned',
+                        'peaceful',
+                        'willing',
+                        'imagined',
+                        'especially',
+                        'despite',
+                        'black',
+                        'given',
+                        'need',
+                        'used',
+                        'seen',
+                        'greatest',
+                        'beyond',
+                        'see',
+                        'takes',
+                        'succeed',
+                        'stuck',
+                        ')',
+                        'during',
+                        'called',
+                        'filled',
+                        '000',
+                        'alone',
+                        'caught',
+                        'what''s',
+                        'single',
+                        'created',
+                        'happens',
+                        'wanted',
+                        'cute',
+                        'struggling',
+                        'thinks',
+                        'sees',
+                        'later',
+                        'realizes',
+                        'world''s',
+                        'loves',
+                        'uncover',
+                        'ready',
+                        'deadly',
+                        'believe',
+                        'itself',
+                        'strong',
+                        'should',
+                        'eat',
+                        'ask',
+                        'brutal',
+                        'big',
+                        'else',
+                        'coming',
+                        'funny',
+                        'harder',
+                        'loved',
+                        'lived',
+                        'welcome',
+                        'decide',
+                        'lose',
+                        'they''ve',
+                        'doing',
+                        'realize',
+                        'making',
+                        'said',
+                        'demonic',
+                        'alongside'
+                        'father''s',
+                        'sleep',
+                        'say',
+                        'unusual',
+                        'original',
+                        'solve',
+                        'four',
+                        'hidden',
+                        'my',
+                        'worse',
+                        'follows',
+                        'growing',
+                        'korean',
+                        'uses',
+                        'secretly',
+                        'royal',
+                        'stronger',
+                        'sentient',
+                        'hot',
+                        'completely',
+                        'sometimes',
+                        'cold',
+                        'brings',
+                        'let',
+                        'independent',
+                        'charming',
+                        'desperate',
+                        'anyone',
+                        'missing',
+                        'choose',
+                        'exist',
+                        'put',
+                        'successful',
+                        'told',
+                        'close',
+                        'eating',
+                        'typical',
+                        'less',
+                        'dies',
+                        'inside',
+                        'least',
+                        'whatever',
+                        'cursed',
+                        'middle',
+                        'achieve',
+                        'amidst',
+                        'trapped',
+                        'sent',
+                        'except',
+                        'talented',
+                        'enters',
+                        'deep',
+                        'came',
+                        'eventually',
+                        'super',
+                        'awkward',
+                        'few',
+                        'school''s',
+                        'fast',
+                        'shocking',
+                        'worst',
+                        'front',
+                        'waiting',
+                        'many',
+                        'novel''s',
+                        'modern',
+                        'tangled',
+                        'asks',
+                        'unfortunately',
+                        'die',
+                        'exists',
+                        'sworn',
+                        'unable',
+                        'probably',
+                        'me',
+                        'complete',
+                        'taking',
+                        'enter',
+                        'stumbles',
+                        'older',
+                        'rather',
+                        'abandoned',
+                        'threaten',
+                        'literally',
+                        'five',
+                        'tough',
+                        'such',
+                        'mythical',
+                        'you''ve',
+                        'aren''t',
+                        'grand',
+                        'near',
+                        'quite',
+                        'extraordinary',
+                        'short',
+                        'puts'
+                        'constant',
+                        'sinister',
+                        'overcome',
+                        'unknown'
+                        'brought',
+                        'twisted',
+                        'professional',
+                        'losing',
+                        'looking',
+                        'lucky',
+                        'apart',
+                        'taken',
+                        'whether',
+                        'expected',
+                        'avoid',
+                        'sweet',
+                        'ahead',
+                        'turning',
+                        'reincarnated',
+                        'destined',
+                        'learning',
+                        'embarks',
+                        'fulfill',
+                        'importantly',
+                        'reclusive',
+                        'biggest',
+                        'maybe',
+                        'built',
+                        'grown',
+                        'armed',
+                        'grow',
+                        'incredible',
+                        'discovering',
+                        'brother''s',
+                        'starting',
+                        'dying',
+                        'restore',
+                        'understand',
+                        'determine',
+                        'several',
+                        'possibly',
+                        'discovered',
+                        'forward',
+                        'almost',
+                        'reveals',
+                        'longer'
+                        'alike',
+                        'eccentric',
+                        'transported',
+                        'assigned',
+                        'sister''s',
+                        'already',
+                        'thrown',
+                        'zero',
+                        '&',
+                        '5',
+                        'orphaned',
+                        'dreamed',
+                        'terrifying',
+                        'done',
+                        'unravel',
+                        'she''ll',
+                        'wasn''t',
+                        'found',
+                        'rare',
+                        'closer',
+                        't',
+                        'returning',
+                        'local',
+                        'tasked',
+                        'he''ll',
+                        'facing',
+                        'tragic',
+                        'involved',
+                        'boring',
+                        'heartwarming',
+                        'started',
+                        'king''s',
+                        'faced',
+                        'adorable',
+                        'watching',
+                        'up-and-coming',
+                        'appears',
+                        'although',
+                        'went',
+                        'awakens',
+                        'hired',
+                        'online',
+                        'gone',
+                        'chooses',
+                        'took',
+                        'granted',
+                        'keeping',
+                        'previous',
+                        'ruled',
+                        'someone''s',
+                        'twelve',
+                        'ones',
+                        'recruited',
+                        'accepted',
+                        'confront',
+                        'usually',
+                        'based',
+                        'main',
+                        'creepy',
+                        'fragile',
+                        'intimidating',
+                        'prepare',
+                        'clueless',
+                        'purseue',
+                        'apocalyptic',
+                        'lay',
+                        'seven',
+                        'offered',
+                        'intact',
+                        'murdered',
+                        'heavy',
+                        'opposite',
+                        'scared',
+                        'barely',
+                        'celebrate',
+                        'exotic',
+                        'reborn',
+                        'compete',
+                        '1',
+                        'scary',
+                        'moved',
+                        'complicated',
+                        '(a',
+                        'marked',
+                        'tickles',
+                        'kidnapped',
+                        'perilous',
+                        'massive',
+                        'skate',
+                        'political',
+                        'haunted',
+                        'competitive',
+                        'gotten',
+                        'unfold',
+                        'held',
+                        'interrupted',
+                        'darkest',
+                        'adapt',
+                        'believes',
+                        's',
+                        'released',
+                        'let''s',
+                        'familiar',
+                        'needed',
+                        'seemingly',
+                        'hundred',
+                        'exiled',
+                        'succeed',
+                        'forge',
+                        'six',
+                        'finds',
+                        'approaches',
+                        'class''s',
+                        'featuring',
+                        'based',
+                        '1842',
+                        '1969',
+                        'behind',
+                        'allied',
+                        'ago',
+                        'burned',
+                        'cherishes',
+                        'convinces',
+                        'coveted',
+                        'dangerously',
+                        'dearly',
+                        'decided',
+                        'decreed',
+                        'destroyed',
+                        'emperor''s',
+                        'estelle''s',
+                        'execute',
+                        'expresses',
+                        'father''s',
+                        'finds',
+                        'harang''s',
+                        'historic',
+                        'horse-drawn',
+                        'infiltrate',
+                        'invaded',
+                        'loving',
+                        'exactly',
+                        'back') 
+GROUP BY plural_match.matched_summary
+HAVING COUNT (plural_match.matched_summary) < 186
+ORDER BY COUNT (plural_match.matched_summary) DESC;
+
+--STEP 5: Find out most commonly used nouns.
+SELECT *
+FROM clean_summary;
+
+--QUERY 3
+--STEP 6: We want to know how many comics use a word, not how many times a word is used overall.
+--So, if a word is used in a comic's summary twice, we want to count it as one occurance.
+
+CREATE TABLE count1 AS (SELECT name, genre, summary, 
+  CASE WHEN COUNT (summary) > 0 THEN 1
+  ELSE 0
+  END AS count1
+  FROM split_summary
+  INNER JOIN clean_summary 
+  ON summary = clean_summary 
+  WHERE summary IN
+    (SELECT clean_summary
+      FROM clean_summary)
+GROUP BY name, genre, summary
+ORDER BY name, genre, summary);
+
+--STEP 7: We only want to look at the top 5 specicific nouns used for each genre.
+-- To do this we need to rank the specific nouns from most used to least used for each genre. 
+CREATE TABLE count2 AS (SELECT genre, summary, COUNT (count1) AS count2, 
+          DENSE_RANK() OVER(PARTITION BY genre ORDER BY COUNT (count1) DESC) AS rank_summary
+FROM count1
+GROUP BY genre, summary
+ORDER BY genre, COUNT (count1) DESC, summary);
+
+CREATE TABLE count2_2 AS (SELECT DISTINCT genre, 
+  CASE WHEN count2 > 1 THEN summary
+  ELSE 'WORDS APPEAR ONCE'
+  END AS summary, 
+  CASE WHEN count2 > 1 THEN count2
+  ELSE NULL
+  END AS count,
+  rank_summary
+FROM count2
+ORDER BY rank_summary);
+
+CREATE TABLE count3 AS (SELECT genre, summary, count2_2.count AS count, rank_summary
+FROM count2_2
+GROUP BY genre, summary, rank_summary, count2_2.count
+HAVING rank_summary <= 5
+ORDER BY genre, rank_summary);
+
+CREATE TABLE count4 AS (
+SELECT genre, summary, count,
+CASE WHEN count>1 THEN rank_summary
+ELSE 5
+END AS rank_summary
+FROM count3
+ORDER BY genre, rank_summary);
+
+--STEP 8: We only want to show the top 5 specific nouns for each genre
+--So, we will need to limit the query results.
+--This query will give us our final result. 
+SELECT count4.genre, summary, count, count/(amount_of_comics*1.0) AS percent_of_comics_in_genre
+FROM count4
+INNER JOIN genre_count 
+ON count4.genre = genre_count.genre
+GROUP BY count4.genre, summary, rank_summary, count, amount_of_comics
+HAVING rank_summary <= 5
+ORDER BY genre, rank_summary, summary;
