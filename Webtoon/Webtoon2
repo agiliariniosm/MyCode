@@ -1,1 +1,72 @@
+--Percent of words in all comics (no genre)
+(SELECT name, COUNT (DISTINCT name) AS comics_count1
+FROM count1
+GROUP BY name
+ORDER BY COUNT (DISTINCT name) DESC);
 
+CREATE TABLE total_comics AS
+(SELECT name, SUM (comics_count1) OVER () AS total_comics
+FROM comics_count1);
+
+SELECT name, genre, summar 
+FROM count1
+
+SELECT summary, COUNT(count1), COUNT(count1)/total_comics AS percent_in_allcomics
+FROM count1
+LEFT JOIN total_comics
+ON count1.name = total_comics.name
+GROUP BY summary, total_comics
+ORDER BY COUNT(count1) DESC;
+
+SELECT 
+  CASE WHEN COUNT(count1)<13 THEN 'other'
+  ELSE summary
+  END AS summary, 
+  
+FROM count1
+GROUP BY summary
+ORDER BY COUNT(count1) DESC
+
+WITH comics_other AS (SELECT 
+  CASE WHEN COUNT(count1)<13 THEN 'other'
+  ELSE summary
+  END AS summary,
+COUNT (count1)
+FROM count1
+GROUP BY summary
+ORDER BY COUNT(count1) DESC)
+
+CREATE TABLE percent_in_allcomics AS 
+(SELECT summary, COUNT(count1) AS count2, COUNT(count1)/total_comics AS percent_in_allcomics, total_comics
+FROM count1
+LEFT JOIN total_comics
+ON count1.name = total_comics.name
+GROUP BY summary, total_comics
+ORDER BY COUNT(count1) DESC);
+
+DROP TABLE comics_other
+CREATE TABLE comics_other AS  
+(SELECT 
+  CASE WHEN percent_in_allcomics <0.03 THEN 'other'
+  ELSE summary
+  END AS summary, 
+count2,
+percent_in_allcomics,
+total_comics
+FROM percent_in_allcomics
+GROUP BY summary, percent_in_allcomics, count2, total_comics
+ORDER BY count2 DESC)
+
+CREATE TABLE comics_other2 AS
+(SELECT 
+summary, 
+SUM(count2) AS count3,
+total_comics
+FROM comics_other
+GROUP BY summary, total_comics
+ORDER BY count3 DESC)
+
+SELECT summary, count3, count3/total_comics AS percent_in_allcomics
+FROM comics_other2
+WHERE summary != '
+'
